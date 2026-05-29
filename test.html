@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>제주 대기오염물질 환경·기후 대시보드</title>
+<style>
+:root {
+  --bg:#071511; --panel:#0f231d; --panel2:#122b23; --card:#122a24; --line:#21483f;
+  --text:#eaf7f1; --muted:#aac4bb; --aqua:#5eead4; --green:#86efac; --lime:#bef264;
+  --amber:#facc15; --orange:#fb923c; --red:#f87171; --blue:#93c5fd; --shadow:0 20px 50px rgba(0,0,0,.28);
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif; background:
+  radial-gradient(circle at top left, rgba(94,234,212,.16), transparent 35%),
+  radial-gradient(circle at top right, rgba(134,239,172,.14), transparent 34%),
+  linear-gradient(160deg, #05100d 0%, #071511 50%, #0d201a 100%); color:var(--text); }
+.container { width:min(1440px, 94vw); margin:0 auto; padding:28px 0 52px; }
+.hero { display:grid; grid-template-columns: 1.3fr .7fr; gap:22px; align-items:stretch; margin-bottom:20px; }
+.hero-main, .panel { background:linear-gradient(145deg, rgba(18,42,36,.94), rgba(10,28,23,.94)); border:1px solid rgba(134,239,172,.17); border-radius:28px; box-shadow:var(--shadow); }
+.hero-main { padding:34px; position:relative; overflow:hidden; }
+.hero-main:after { content:""; position:absolute; right:-90px; top:-90px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, rgba(94,234,212,.22), transparent 70%); }
+.badge { display:inline-flex; gap:8px; align-items:center; border:1px solid rgba(94,234,212,.35); background:rgba(94,234,212,.08); color:#ccfbf1; padding:8px 12px; border-radius:999px; font-weight:700; font-size:13px; }
+h1 { margin:18px 0 10px; font-size:clamp(30px, 4.2vw, 58px); letter-spacing:-.05em; line-height:1.02; }
+.subtitle { max-width:850px; color:var(--muted); line-height:1.7; font-size:16px; }
+.hero-side { padding:24px; display:flex; flex-direction:column; gap:14px; }
+.source-box { border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); padding:16px; border-radius:20px; }
+.source-box strong { display:block; margin-bottom:6px; }
+.source-box span { color:var(--muted); line-height:1.55; font-size:14px; }
+.grid { display:grid; gap:18px; }
+.kpis { grid-template-columns: repeat(5, minmax(160px, 1fr)); margin:18px 0; }
+.kpi { background:rgba(18,42,36,.92); border:1px solid rgba(255,255,255,.08); border-radius:22px; padding:18px; box-shadow:var(--shadow); }
+.kpi .label { color:var(--muted); font-size:13px; font-weight:700; }
+.kpi .value { font-size:clamp(24px, 2.6vw, 38px); font-weight:850; margin:8px 0 2px; letter-spacing:-.04em; }
+.kpi .delta { font-size:13px; font-weight:800; }
+.good { color:var(--green); } .bad { color:var(--orange); } .neutral { color:var(--blue); }
+.section { margin-top:22px; }
+.section-title { display:flex; justify-content:space-between; align-items:flex-end; gap:14px; margin:0 0 12px; }
+.section-title h2 { margin:0; font-size:24px; letter-spacing:-.03em; }
+.section-title p { margin:4px 0 0; color:var(--muted); font-size:14px; }
+.controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+select, button { background:#0b1e19; color:var(--text); border:1px solid rgba(94,234,212,.3); padding:10px 12px; border-radius:12px; font-weight:700; }
+button { cursor:pointer; } button.active { background:linear-gradient(90deg, rgba(94,234,212,.25), rgba(134,239,172,.24)); border-color:rgba(134,239,172,.55); }
+.two-col { grid-template-columns: 1.12fr .88fr; }
+.three-col { grid-template-columns: 1fr 1fr 1fr; }
+.panel { padding:22px; min-height:260px; }
+.panel h3 { margin:0 0 8px; font-size:18px; }
+.panel .desc { color:var(--muted); margin:0 0 16px; font-size:13px; line-height:1.55; }
+canvas { width:100%; height:330px; background:rgba(255,255,255,.02); border-radius:18px; border:1px solid rgba(255,255,255,.07); }
+.legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.legend span { padding:6px 9px; border-radius:999px; background:rgba(255,255,255,.06); color:var(--muted); font-size:12px; }
+.table-wrap { overflow:auto; max-height:430px; border-radius:18px; border:1px solid rgba(255,255,255,.07); }
+table { width:100%; border-collapse:separate; border-spacing:0; min-width:760px; }
+th, td { padding:12px 11px; border-bottom:1px solid rgba(255,255,255,.07); text-align:right; font-size:13px; }
+th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:#10271f; z-index:1; }
+th { position:sticky; top:0; background:#10271f; color:#d9fff7; z-index:2; font-size:12px; letter-spacing:-.01em; }
+.rank-list { display:flex; flex-direction:column; gap:10px; }
+.rank-item { display:grid; grid-template-columns:80px 1fr 52px; gap:10px; align-items:center; }
+.bar-bg { height:14px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; }
+.bar { height:100%; border-radius:999px; background:linear-gradient(90deg, var(--green), var(--amber), var(--orange)); }
+.insight { background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:18px; min-height:160px; }
+.insight b { display:block; margin-bottom:8px; color:#d9fff7; }
+.insight p { margin:0; color:var(--muted); line-height:1.65; font-size:14px; }
+.footer { color:#89a99f; font-size:12px; line-height:1.7; margin-top:22px; padding:18px 4px; }
+.pill { display:inline-block; padding:4px 8px; border-radius:999px; background:rgba(190,242,100,.12); color:#e6ffad; font-size:12px; font-weight:800; }
+.warn { background:rgba(251,146,60,.12); color:#fed7aa; }
+@media (max-width: 1100px) { .hero, .two-col, .three-col { grid-template-columns:1fr; } .kpis { grid-template-columns:repeat(2,1fr); } }
+@media (max-width: 640px) { .kpis { grid-template-columns:1fr; } .hero-main { padding:24px; } canvas { height:280px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <section class="hero">
+    <div class="hero-main">
+      <div class="badge">🌿 제주 환경·기후 패널 데이터 분석</div>
+      <h1>대기오염물질 변화와 지역별 환경 부담을 한눈에 보는 대시보드</h1>
+      <p class="subtitle">2022~2024년 제주 측정소별 대기오염물질 패널데이터를 기반으로, 지역별 대기질 변화·오염물질별 평균 추세·2024년 상대 환경부담지수를 통합 진단했습니다. 이 대시보드는 의정 보고, 환경정책 기획, 기후 적응형 생활환경 관리에 바로 활용할 수 있도록 구성했습니다.</p>
+    </div>
+    <div class="hero-side panel">
+      <div class="source-box"><strong>분석 대상</strong><span>최종_패널데이터셋 · 11개 지역 × 3개 연도 = 33개 관측치</span></div>
+      <div class="source-box"><strong>핵심 지표</strong><span>이산화황, 이산화질소, 오존, 미세먼지, 초미세먼지</span></div>
+      <div class="source-box"><strong>데이터 품질</strong><span>애월읍 2022년 결측값은 이전 요청 기준에 따라 선형 역방향 보간값을 적용했습니다.</span></div>
+    </div>
+  </section>
+
+  <section class="grid kpis">
+    <div class="kpi"><div class="label">2024 평균 PM10</div><div class="value">26.2</div><div class="delta good">2022 대비 -5.9%</div></div>
+    <div class="kpi"><div class="label">2024 평균 PM2.5</div><div class="value">12.6</div><div class="delta good">2022 대비 -9.7%</div></div>
+    <div class="kpi"><div class="label">2024 평균 오존</div><div class="value">0.0397</div><div class="delta good">2022 대비 -5.8%</div></div>
+    <div class="kpi"><div class="label">2024 환경부담 상위</div><div class="value">연동</div><div class="delta bad">상대지수 78.5</div></div>
+    <div class="kpi"><div class="label">2024 환경부담 하위</div><div class="value">강정동</div><div class="delta good">상대지수 23.8</div></div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <div><h2>오염물질별 추세 분석</h2><p>평균값 기준 연도별 변화와 선택 오염물질의 지역 분포를 함께 확인합니다.</p></div>
+      <div class="controls">
+        <select id="pollutantSelect"></select>
+        <button class="year-btn active" data-year="2024">2024</button>
+        <button class="year-btn" data-year="2023">2023</button>
+        <button class="year-btn" data-year="2022">2022</button>
+      </div>
+    </div>
+    <div class="grid two-col">
+      <div class="panel">
+        <h3>제주 평균 추세</h3>
+        <p class="desc">선택한 오염물질의 2022~2024년 평균 변화입니다. PM 계열은 2023년 상승 후 2024년 개선되는 V자형 패턴을 보입니다.</p>
+        <canvas id="trendChart" width="980" height="420"></canvas>
+        <div class="legend"><span id="trendLegend"></span></div>
+      </div>
+      <div class="panel">
+        <h3>지역별 분포</h3>
+        <p class="desc">선택 연도·선택 오염물질 기준 지역별 측정값을 내림차순으로 표시합니다.</p>
+        <canvas id="regionBar" width="860" height="420"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="section grid two-col">
+    <div class="panel">
+      <h3>2024 지역별 통합 환경부담지수</h3>
+      <p class="desc">5개 오염물질을 2024년 지역 간 최소~최대 범위로 표준화한 상대지수입니다. 절대 기준치가 아닌 데이터 내부 비교용 지표입니다.</p>
+      <div class="rank-list" id="burdenRank"></div>
+    </div>
+    <div class="panel">
+      <h3>오염물질별 2024 최고·최저 지역</h3>
+      <p class="desc">오염물질 특성에 따라 취약지역이 다르게 나타나므로, 단일 순위보다 오염물질별 정책 처방이 중요합니다.</p>
+      <div class="table-wrap"><table id="maxminTable"></table></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <div><h2>측정값 히트맵</h2><p>연도별 지역-오염물질 행렬을 색 농도로 비교합니다. 진한 색일수록 해당 연도 내 상대값이 높습니다.</p></div>
+    </div>
+    <div class="panel">
+      <div class="table-wrap"><table id="heatmapTable"></table></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><div><h2>정책 인사이트</h2><p>환경·기후 관점에서 바로 활용 가능한 핵심 해석입니다.</p></div></div>
+    <div class="grid three-col">
+      <div class="insight"><b>① 미세먼지·초미세먼지 개선 신호</b><p>제주 평균 미세먼지는 2022년 대비 2024년에 -5.9%, 초미세먼지는 -9.7% 변화했습니다. 2023년 상승 후 2024년에 개선된 만큼, 고농도 계절·외부 유입·생활권 배출원을 함께 관리하는 체계가 필요합니다.</p></div>
+      <div class="insight"><b>② 도심 생활권 질소산화물 관리</b><p>2024년 이산화질소는 이도동과 연동이 상대적으로 높습니다. 교통량·상업활동·도로변 생활권과 결합해 저감대책을 설계하면 정책 타깃팅 효과를 높일 수 있습니다.</p></div>
+      <div class="insight"><b>③ 오존은 지역별 양상이 다름</b><p>오존은 평균적으로 감소했지만 2024년 대정읍이 상대적으로 높습니다. 오존은 기상·일사·전구물질과 연동되므로, 여름철 기후 적응형 모니터링과 예보 연계가 중요합니다.</p></div>
+    </div>
+  </section>
+
+  <section class="section grid two-col">
+    <div class="panel">
+      <h3>2022→2024 지역별 PM 변화율</h3>
+      <p class="desc">미세먼지와 초미세먼지 변화율을 비교해 생활권 단위의 개선·악화 후보지역을 확인합니다.</p>
+      <canvas id="pmChange" width="980" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h3>데이터 처리 메모</h3>
+      <p class="desc">분석 재현성을 위해 원자료 변환 및 보간 사실을 명시합니다.</p>
+      <div class="source-box"><strong>컬럼 구조</strong><span>ID, TIME, 이산화황, 이산화질소, 오존, 미세먼지, 초미세먼지</span></div><br>
+      <div class="source-box"><strong>보간 적용</strong><span>애월읍 2022년 일부 값은 2023~2024년 변화량을 이용한 선형 역방향 보간값입니다. 보간값은 정책 판단 시 원자료 확정값과 구분해 관리하는 것이 바람직합니다.</span></div><br>
+      <div class="source-box"><strong>해석 주의</strong><span>통합 환경부담지수는 대시보드 내부 비교용 상대지수이며 법정 기준 초과 여부를 판정하는 지표가 아닙니다.</span></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span class="pill">환경·기후 특화 설계</span> <span class="pill warn">상대지수 기반</span><br>
+    본 대시보드는 업로드된 최종_패널데이터셋의 수치만 사용하여 생성되었습니다. 단위는 원자료 관례에 따라 기체상 오염물질은 ppm, 입자상 오염물질은 ㎍/㎥로 표시했습니다.
+  </div>
+</div>
+
+<script>
+const DATA = {"rows": [{"ID": "강정동", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.005, "오존": 0.044, "미세먼지": 26.0, "초미세먼지": 14.0}, {"ID": "강정동", "TIME": 2023, "이산화황": 0.0013, "이산화질소": 0.0057, "오존": 0.0439, "미세먼지": 28.0, "초미세먼지": 13.0}, {"ID": "강정동", "TIME": 2024, "이산화황": 0.0016, "이산화질소": 0.0049, "오존": 0.0412, "미세먼지": 22.0, "초미세먼지": 11.0}, {"ID": "남원읍", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.004, "오존": 0.042, "미세먼지": 24.0, "초미세먼지": 12.0}, {"ID": "남원읍", "TIME": 2023, "이산화황": 0.0012, "이산화질소": 0.0042, "오존": 0.0413, "미세먼지": 29.0, "초미세먼지": 13.0}, {"ID": "남원읍", "TIME": 2024, "이산화황": 0.0013, "이산화질소": 0.0051, "오존": 0.0394, "미세먼지": 28.0, "초미세먼지": 13.0}, {"ID": "대정읍", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.005, "오존": 0.044, "미세먼지": 27.0, "초미세먼지": 14.0}, {"ID": "대정읍", "TIME": 2023, "이산화황": 0.0013, "이산화질소": 0.0056, "오존": 0.0433, "미세먼지": 30.0, "초미세먼지": 15.0}, {"ID": "대정읍", "TIME": 2024, "이산화황": 0.0015, "이산화질소": 0.0054, "오존": 0.0446, "미세먼지": 24.0, "초미세먼지": 11.0}, {"ID": "동홍동", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.007, "오존": 0.043, "미세먼지": 26.0, "초미세먼지": 11.0}, {"ID": "동홍동", "TIME": 2023, "이산화황": 0.0014, "이산화질소": 0.0067, "오존": 0.0414, "미세먼지": 31.0, "초미세먼지": 13.0}, {"ID": "동홍동", "TIME": 2024, "이산화황": 0.0015, "이산화질소": 0.007, "오존": 0.04, "미세먼지": 25.0, "초미세먼지": 13.0}, {"ID": "성산읍", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.005, "오존": 0.046, "미세먼지": 28.0, "초미세먼지": 14.0}, {"ID": "성산읍", "TIME": 2023, "이산화황": 0.0012, "이산화질소": 0.0051, "오존": 0.0403, "미세먼지": 32.0, "초미세먼지": 15.0}, {"ID": "성산읍", "TIME": 2024, "이산화황": 0.0014, "이산화질소": 0.005, "오존": 0.0398, "미세먼지": 26.0, "초미세먼지": 13.0}, {"ID": "애월읍", "TIME": 2022, "이산화황": 0.0017, "이산화질소": 0.0048, "오존": 0.0427, "미세먼지": 34.0, "초미세먼지": 13.0}, {"ID": "애월읍", "TIME": 2023, "이산화황": 0.0018, "이산화질소": 0.005, "오존": 0.0421, "미세먼지": 31.0, "초미세먼지": 12.0}, {"ID": "애월읍", "TIME": 2024, "이산화황": 0.0019, "이산화질소": 0.0052, "오존": 0.0415, "미세먼지": 28.0, "초미세먼지": 11.0}, {"ID": "연동", "TIME": 2022, "이산화황": 0.002, "이산화질소": 0.01, "오존": 0.041, "미세먼지": 29.0, "초미세먼지": 15.0}, {"ID": "연동", "TIME": 2023, "이산화황": 0.0017, "이산화질소": 0.0097, "오존": 0.0399, "미세먼지": 34.0, "초미세먼지": 16.0}, {"ID": "연동", "TIME": 2024, "이산화황": 0.0017, "이산화질소": 0.0095, "오존": 0.0378, "미세먼지": 29.0, "초미세먼지": 14.0}, {"ID": "이도동", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.01, "오존": 0.044, "미세먼지": 31.0, "초미세먼지": 16.0}, {"ID": "이도동", "TIME": 2023, "이산화황": 0.0014, "이산화질소": 0.0106, "오존": 0.0422, "미세먼지": 35.0, "초미세먼지": 14.0}, {"ID": "이도동", "TIME": 2024, "이산화황": 0.0019, "이산화질소": 0.0101, "오존": 0.0387, "미세먼지": 26.0, "초미세먼지": 13.0}, {"ID": "조천읍", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.007, "오존": 0.04, "미세먼지": 28.0, "초미세먼지": 16.0}, {"ID": "조천읍", "TIME": 2023, "이산화황": 0.0019, "이산화질소": 0.0066, "오존": 0.0417, "미세먼지": 35.0, "초미세먼지": 14.0}, {"ID": "조천읍", "TIME": 2024, "이산화황": 0.0015, "이산화질소": 0.0062, "오존": 0.0399, "미세먼지": 27.0, "초미세먼지": 12.0}, {"ID": "한림읍", "TIME": 2022, "이산화황": 0.001, "이산화질소": 0.007, "오존": 0.04, "미세먼지": 26.0, "초미세먼지": 16.0}, {"ID": "한림읍", "TIME": 2023, "이산화황": 0.0015, "이산화질소": 0.007, "오존": 0.0427, "미세먼지": 32.0, "초미세먼지": 14.0}, {"ID": "한림읍", "TIME": 2024, "이산화황": 0.0016, "이산화질소": 0.007, "오존": 0.0401, "미세먼지": 26.0, "초미세먼지": 14.0}, {"ID": "화북동", "TIME": 2022, "이산화황": 0.002, "이산화질소": 0.009, "오존": 0.037, "미세먼지": 27.0, "초미세먼지": 13.0}, {"ID": "화북동", "TIME": 2023, "이산화황": 0.0021, "이산화질소": 0.0091, "오존": 0.0373, "미세먼지": 30.0, "초미세먼지": 13.0}, {"ID": "화북동", "TIME": 2024, "이산화황": 0.0019, "이산화질소": 0.0077, "오존": 0.0337, "미세먼지": 27.0, "초미세먼지": 14.0}], "pollutants": ["이산화황", "이산화질소", "오존", "미세먼지", "초미세먼지"], "years": [2022, 2023, 2024], "regions": ["강정동", "남원읍", "대정읍", "동홍동", "성산읍", "애월읍", "연동", "이도동", "조천읍", "한림읍", "화북동"], "units": {"이산화황": "ppm", "이산화질소": "ppm", "오존": "ppm", "미세먼지": "㎍/㎥", "초미세먼지": "㎍/㎥"}, "means": {"이산화황": {"2022": 0.0012454545454545455, "2023": 0.0015272727272727272, "2024": 0.001618181818181818}, "이산화질소": {"2022": 0.006709090909090909, "2023": 0.006845454545454545, "2024": 0.0066454545454545455}, "오존": {"2022": 0.04215454545454545, "2023": 0.04146363636363636, "2024": 0.0397}, "미세먼지": {"2022": 27.818181818181817, "2023": 31.545454545454547, "2024": 26.181818181818183}, "초미세먼지": {"2022": 14.0, "2023": 13.818181818181818, "2024": 12.636363636363637}}, "changes": {"이산화황": {"abs": 0.0003727272727272726, "pct": 29.927007299270063}, "이산화질소": {"abs": -6.36363636363638e-05, "pct": -0.9485094850948533}, "오존": {"abs": -0.0024545454545454523, "pct": -5.822730213500103}, "미세먼지": {"abs": -1.6363636363636331, "pct": -5.8823529411764595}, "초미세먼지": {"abs": -1.3636363636363633, "pct": -9.740259740259738}}, "maxmin2024": {"이산화황": {"maxRegion": "애월읍", "maxValue": 0.0019, "minRegion": "남원읍", "minValue": 0.0013}, "이산화질소": {"maxRegion": "이도동", "maxValue": 0.0101, "minRegion": "강정동", "minValue": 0.0049}, "오존": {"maxRegion": "대정읍", "maxValue": 0.0446, "minRegion": "화북동", "minValue": 0.0337}, "미세먼지": {"maxRegion": "연동", "maxValue": 29.0, "minRegion": "강정동", "minValue": 22.0}, "초미세먼지": {"maxRegion": "연동", "maxValue": 14.0, "minRegion": "강정동", "minValue": 11.0}}, "burden2024": [{"ID": "연동", "score": 78.5, "이산화황": 0.0017, "이산화질소": 0.0095, "오존": 0.0378, "미세먼지": 29.0, "초미세먼지": 14.0}, {"ID": "이도동", "score": 73.9, "이산화황": 0.0019, "이산화질소": 0.0101, "오존": 0.0387, "미세먼지": 26.0, "초미세먼지": 13.0}, {"ID": "화북동", "score": 65.1, "이산화황": 0.0019, "이산화질소": 0.0077, "오존": 0.0337, "미세먼지": 27.0, "초미세먼지": 14.0}, {"ID": "한림읍", "score": 61.2, "이산화황": 0.0016, "이산화질소": 0.007, "오존": 0.0401, "미세먼지": 26.0, "초미세먼지": 14.0}, {"ID": "애월읍", "score": 52.6, "이산화황": 0.0019, "이산화질소": 0.0052, "오존": 0.0415, "미세먼지": 28.0, "초미세먼지": 11.0}, {"ID": "동홍동", "score": 48.2, "이산화황": 0.0015, "이산화질소": 0.007, "오존": 0.04, "미세먼지": 25.0, "초미세먼지": 13.0}, {"ID": "조천읍", "score": 44.0, "이산화황": 0.0015, "이산화질소": 0.0062, "오존": 0.0399, "미세먼지": 27.0, "초미세먼지": 12.0}, {"ID": "남원읍", "score": 41.7, "이산화황": 0.0013, "이산화질소": 0.0051, "오존": 0.0394, "미세먼지": 28.0, "초미세먼지": 13.0}, {"ID": "성산읍", "score": 39.7, "이산화황": 0.0014, "이산화질소": 0.005, "오존": 0.0398, "미세먼지": 26.0, "초미세먼지": 13.0}, {"ID": "대정읍", "score": 34.3, "이산화황": 0.0015, "이산화질소": 0.0054, "오존": 0.0446, "미세먼지": 24.0, "초미세먼지": 11.0}, {"ID": "강정동", "score": 23.8, "이산화황": 0.0016, "이산화질소": 0.0049, "오존": 0.0412, "미세먼지": 22.0, "초미세먼지": 11.0}], "regionChanges": [{"ID": "강정동", "PM10변화율": -15.4, "PM25변화율": -21.4}, {"ID": "남원읍", "PM10변화율": 16.7, "PM25변화율": 8.3}, {"ID": "대정읍", "PM10변화율": -11.1, "PM25변화율": -21.4}, {"ID": "동홍동", "PM10변화율": -3.8, "PM25변화율": 18.2}, {"ID": "성산읍", "PM10변화율": -7.1, "PM25변화율": -7.1}, {"ID": "애월읍", "PM10변화율": -17.6, "PM25변화율": -15.4}, {"ID": "연동", "PM10변화율": 0.0, "PM25변화율": -6.7}, {"ID": "이도동", "PM10변화율": -16.1, "PM25변화율": -18.8}, {"ID": "조천읍", "PM10변화율": -3.6, "PM25변화율": -25.0}, {"ID": "한림읍", "PM10변화율": 0.0, "PM25변화율": -12.5}, {"ID": "화북동", "PM10변화율": 0.0, "PM25변화율": 7.7}], "interpolated": [{"ID": "애월읍", "TIME": 2022, "하위오염물질": "이산화황", "기존값": null, "보간후_측정값": 0.0017, "보간방식": "2022년 경계 결측: 2023~2024년 변화량 기준 선형 역방향 보간(2022=2×2023-2024)"}, {"ID": "애월읍", "TIME": 2022, "하위오염물질": "이산화질소", "기존값": null, "보간후_측정값": 0.0048, "보간방식": "2022년 경계 결측: 2023~2024년 변화량 기준 선형 역방향 보간(2022=2×2023-2024)"}, {"ID": "애월읍", "TIME": 2022, "하위오염물질": "오존", "기존값": null, "보간후_측정값": 0.0427, "보간방식": "2022년 경계 결측: 2023~2024년 변화량 기준 선형 역방향 보간(2022=2×2023-2024)"}, {"ID": "애월읍", "TIME": 2022, "하위오염물질": "미세먼지", "기존값": null, "보간후_측정값": 34, "보간방식": "2022년 경계 결측: 2023~2024년 변화량 기준 선형 역방향 보간(2022=2×2023-2024)"}, {"ID": "애월읍", "TIME": 2022, "하위오염물질": "초미세먼지", "기존값": null, "보간후_측정값": 13, "보간방식": "2022년 경계 결측: 2023~2024년 변화량 기준 선형 역방향 보간(2022=2×2023-2024)"}]};
+const colors = {'이산화황':'#bef264','이산화질소':'#93c5fd','오존':'#5eead4','미세먼지':'#facc15','초미세먼지':'#fb923c'};
+let selectedPollutant = '미세먼지';
+let selectedYear = 2024;
+
+function fmt(v, p) {
+  if (['이산화황','이산화질소','오존'].includes(p)) return Number(v).toFixed(4);
+  return Number(v).toFixed(1);
+}
+function unit(p) { return DATA.units[p] || ''; }
+function money(v) { return Number(v).toLocaleString('ko-KR'); }
+function cssColor(value, min, max) {
+  const t = max === min ? 0 : Math.max(0, Math.min(1, (value-min)/(max-min)));
+  const alpha = 0.10 + t*0.58;
+  return `rgba(251, 146, 60, ${alpha})`;
+}
+
+function setupControls() {
+  const sel = document.getElementById('pollutantSelect');
+  sel.innerHTML = DATA.pollutants.map(p=>`<option value="${p}">${p} (${unit(p)})</option>`).join('');
+  sel.value = selectedPollutant;
+  sel.addEventListener('change', e=>{ selectedPollutant=e.target.value; renderAll(); });
+  document.querySelectorAll('.year-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      selectedYear = Number(btn.dataset.year);
+      document.querySelectorAll('.year-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    });
+  });
+}
+
+function drawAxes(ctx, W, H, pad) {
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H-pad.b); ctx.lineTo(W-pad.r, H-pad.b); ctx.stroke();
+  ctx.fillStyle='rgba(234,247,241,.75)'; ctx.font='22px system-ui';
+}
+function clearCanvas(canvas) {
+  const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return ctx;
+}
+function drawTrend() {
+  const canvas=document.getElementById('trendChart'), ctx=clearCanvas(canvas); const W=canvas.width,H=canvas.height;
+  const pad={l:72,r:36,t:36,b:58};
+  const vals=DATA.years.map(y=>DATA.means[selectedPollutant][y]);
+  let min=Math.min(...vals), max=Math.max(...vals); const span=max-min || max || 1; min-=span*.12; max+=span*.12;
+  drawAxes(ctx,W,H,pad);
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.fillStyle='rgba(234,247,241,.55)'; ctx.font='18px system-ui';
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(H-pad.t-pad.b)*i/4; const val=max-(max-min)*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillText(fmt(val,selectedPollutant), 8, y+6);
+  }
+  const points=DATA.years.map((yr,i)=>{
+    const x=pad.l+(W-pad.l-pad.r)*i/(DATA.years.length-1);
+    const y=H-pad.b-(vals[i]-min)/(max-min)*(H-pad.t-pad.b);
+    return {x,y,yr,val:vals[i]};
+  });
+  ctx.strokeStyle=colors[selectedPollutant]; ctx.lineWidth=6; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); points.forEach((pt,i)=> i?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y)); ctx.stroke();
+  points.forEach(pt=>{
+    ctx.fillStyle='#071511'; ctx.strokeStyle=colors[selectedPollutant]; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,10,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(234,247,241,.9)'; ctx.font='bold 20px system-ui'; ctx.textAlign='center'; ctx.fillText(pt.yr,pt.x,H-18);
+    ctx.fillStyle='#d9fff7'; ctx.font='bold 19px system-ui'; ctx.fillText(fmt(pt.val,selectedPollutant),pt.x,pt.y-18);
+  });
+  ctx.textAlign='left';
+  const chg=DATA.changes[selectedPollutant].pct;
+  document.getElementById('trendLegend').innerText = `${selectedPollutant} 평균: 2022년 ${fmt(DATA.means[selectedPollutant][2022], selectedPollutant)} → 2024년 ${fmt(DATA.means[selectedPollutant][2024], selectedPollutant)} ${unit(selectedPollutant)} / 변화율 ${chg>=0?'+':''}${chg.toFixed(1)}%`;
+}
+function drawRegionBar() {
+  const canvas=document.getElementById('regionBar'), ctx=clearCanvas(canvas); const W=canvas.width,H=canvas.height;
+  const pad={l:86,r:32,t:28,b:46};
+  const arr=DATA.rows.filter(r=>r.TIME===selectedYear).map(r=>({ID:r.ID, value:r[selectedPollutant]})).sort((a,b)=>b.value-a.value);
+  const max=Math.max(...arr.map(d=>d.value))*1.1;
+  ctx.fillStyle='rgba(234,247,241,.75)'; ctx.font='17px system-ui';
+  const barH=(H-pad.t-pad.b)/arr.length*.68; const gap=(H-pad.t-pad.b)/arr.length*.32;
+  arr.forEach((d,i)=>{
+    const y=pad.t+i*(barH+gap); const w=(W-pad.l-pad.r)*(d.value/max);
+    ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(pad.l,y,W-pad.l-pad.r,barH);
+    const grad=ctx.createLinearGradient(pad.l,0,pad.l+w,0); grad.addColorStop(0,'#5eead4'); grad.addColorStop(.65,'#facc15'); grad.addColorStop(1,'#fb923c');
+    ctx.fillStyle=grad; ctx.fillRect(pad.l,y,w,barH);
+    ctx.fillStyle='rgba(234,247,241,.9)'; ctx.textAlign='right'; ctx.fillText(d.ID,pad.l-12,y+barH*.75);
+    ctx.textAlign='left'; ctx.fillStyle='#eafff8'; ctx.font='bold 16px system-ui'; ctx.fillText(fmt(d.value,selectedPollutant),pad.l+w+8,y+barH*.75);
+    ctx.font='17px system-ui';
+  });
+}
+function renderBurden() {
+  const el=document.getElementById('burdenRank');
+  el.innerHTML = DATA.burden2024.map((d,i)=>`<div class="rank-item"><b>${i+1}. ${d.ID}</b><div class="bar-bg"><div class="bar" style="width:${d.score}%"></div></div><strong>${d.score.toFixed(1)}</strong></div>`).join('');
+}
+function renderMaxminTable() {
+  const table=document.getElementById('maxminTable');
+  table.innerHTML='<thead><tr><th>오염물질</th><th>최고 지역</th><th>최고값</th><th>최저 지역</th><th>최저값</th><th>단위</th></tr></thead><tbody>'+DATA.pollutants.map(p=>{
+    const d=DATA.maxmin2024[p];
+    return `<tr><td>${p}</td><td>${d.maxRegion}</td><td>${fmt(d.maxValue,p)}</td><td>${d.minRegion}</td><td>${fmt(d.minValue,p)}</td><td>${unit(p)}</td></tr>`;
+  }).join('')+'</tbody>';
+}
+function renderHeatmap() {
+  const table=document.getElementById('heatmapTable');
+  const arr=DATA.rows.filter(r=>r.TIME===selectedYear).sort((a,b)=>a.ID.localeCompare(b.ID,'ko'));
+  const mins={}, maxs={};
+  DATA.pollutants.forEach(p=>{ mins[p]=Math.min(...arr.map(r=>r[p])); maxs[p]=Math.max(...arr.map(r=>r[p])); });
+  let html='<thead><tr><th>지역</th>'+DATA.pollutants.map(p=>`<th>${p}<br><small>${unit(p)}</small></th>`).join('')+'</tr></thead><tbody>';
+  arr.forEach(r=>{
+    html += `<tr><td>${r.ID}</td>` + DATA.pollutants.map(p=>`<td style="background:${cssColor(r[p], mins[p], maxs[p])}">${fmt(r[p],p)}</td>`).join('') + '</tr>';
+  });
+  table.innerHTML=html+'</tbody>';
+}
+function drawPMChange() {
+  const canvas=document.getElementById('pmChange'), ctx=clearCanvas(canvas); const W=canvas.width,H=canvas.height;
+  const pad={l:80,r:40,t:30,b:88}; const arr=DATA.regionChanges;
+  const min=Math.min(...arr.map(d=>Math.min(d.PM10변화율,d.PM25변화율)),-1); const max=Math.max(...arr.map(d=>Math.max(d.PM10변화율,d.PM25변화율)),1);
+  const abs=Math.max(Math.abs(min),Math.abs(max))*1.15;
+  const y0=H-pad.b-((0+abs)/(2*abs))*(H-pad.t-pad.b);
+  ctx.strokeStyle='rgba(255,255,255,.22)'; ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(W-pad.r,y0); ctx.stroke();
+  ctx.fillStyle='rgba(234,247,241,.55)'; ctx.font='18px system-ui'; ctx.textAlign='right'; ctx.fillText('0%',pad.l-10,y0+6);
+  const groupW=(W-pad.l-pad.r)/arr.length; const bw=groupW*.26;
+  arr.forEach((d,i)=>{
+    const cx=pad.l+i*groupW+groupW*.5;
+    [['PM10변화율','#facc15'],['PM25변화율','#fb923c']].forEach((key,j)=>{
+      const val=d[key]; const y=H-pad.b-((val+abs)/(2*abs))*(H-pad.t-pad.b); const x=cx+(j-.5)*bw*1.35;
+      ctx.fillStyle=key==='PM10변화율'?'#facc15':'#fb923c';
+      if(val>=0) ctx.fillRect(x, y, bw, y0-y); else ctx.fillRect(x, y0, bw, y-y0);
+    });
+    ctx.save(); ctx.translate(cx,H-48); ctx.rotate(-Math.PI/5); ctx.fillStyle='rgba(234,247,241,.75)'; ctx.font='15px system-ui'; ctx.textAlign='right'; ctx.fillText(d.ID,0,0); ctx.restore();
+  });
+  ctx.fillStyle='#facc15'; ctx.fillRect(W-250,24,16,16); ctx.fillStyle='rgba(234,247,241,.85)'; ctx.font='16px system-ui'; ctx.fillText('미세먼지',W-228,38);
+  ctx.fillStyle='#fb923c'; ctx.fillRect(W-140,24,16,16); ctx.fillStyle='rgba(234,247,241,.85)'; ctx.fillText('초미세먼지',W-118,38);
+}
+function renderAll() { drawTrend(); drawRegionBar(); renderBurden(); renderMaxminTable(); renderHeatmap(); drawPMChange(); }
+setupControls(); renderAll();
+window.addEventListener('resize', renderAll);
+</script>
+</body>
+</html>
